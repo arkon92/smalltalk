@@ -1,0 +1,139 @@
+<html>
+
+<head>
+  <title>Smalltalk v0.1</title>
+  <meta charset="UTF-8">
+  <style>
+
+    #connectionParam {
+      display: block;
+    }
+
+    #errorMessage {
+      color: red;
+      font-size: small;
+    }
+
+    #chatDiv {
+      display: none;
+    }
+
+    #previousMessagesDiv {
+      width: 100%;
+      height: 75%;
+      overflow: scroll;
+    }
+
+    li {
+      list-style: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Welcome !</h1>
+
+<div id="connectionDiv">
+  <!-- User name + connect button -->
+  <div id="connectionParam">
+    <label for="serverIp">Server IP:</label>
+    <input type="text" id="serverIp" value="localhost"/>
+    <label for="username">Username:</label>
+    <input type="text" id="username"/>
+    <button type="button" onclick="connection()">Connect</button>
+  </div>
+  <span id="errorMessage"></span>
+</div>
+
+<div id="chatDiv">
+  <div id="previousMessagesDiv">
+    <ul id="previousMessages">
+    </ul>
+  </div>
+  <input type="text" id="newMessage"/>
+  <button type="button" onclick="sendMessage()">Send</button>
+</div>
+
+<script type="application/javascript">
+
+    var webSocket = undefined;
+
+    const username = document.getElementById("username");
+    username.addEventListener("keyup", function (event) {
+        if (event.key === "Enter") {
+            connection();
+            event.preventDefault();
+        }
+    });
+
+    const newMessage = document.getElementById("newMessage");
+    newMessage.addEventListener("keyup", function (event) {
+        if (event.key === "Enter") {
+            sendMessage();
+            event.preventDefault();
+        }
+    });
+
+    function connection() {
+        const serverIp = document.getElementById("serverIp").value;
+        const username = document.getElementById("username").value;
+
+        const uri = `ws://${serverIp}:5020/smalltalk/${username}`
+        try {
+            webSocket = new WebSocket(uri);
+        } catch (err) {
+            document.getElementById("errorMessage").innerHTML = `Something went wrong`;
+        }
+        webSocket.onerror = function () {
+            document.getElementById("errorMessage").innerHTML = `Unable to connect to ${uri}. Please make sure everything is correct.`;
+        };
+        webSocket.onopen = function () {
+            const connectionDiv = document.getElementById("connectionDiv");
+            connectionDiv.style.display = "none";
+            const chatDiv = document.getElementById("chatDiv");
+            chatDiv.style.display = "block";
+        }
+
+        webSocket.onmessage = function (event) {
+            const incomingMessage = JSON.parse(event.data)
+
+            if (incomingMessage.value == "KeepAlive") return;
+
+            const username = incomingMessage.user.name;
+            const message = incomingMessage.value;
+            const messageDate = incomingMessage.date
+
+            const previousMessages = document.getElementById("previousMessages");
+            const newMessage = document.createElement("li");
+
+            const boldName = document.createElement("b");
+            boldName.appendChild(document.createTextNode(username));
+
+            const italicDate = document.createElement("i")
+            italicDate.appendChild(document.createTextNode(` ${messageDate} `));
+
+            newMessage.append(
+                boldName,
+                italicDate,
+                document.createTextNode(
+                    `: ${message}`
+                ));
+
+            if (username === "server") {
+                newMessage.style.cssText = 'color: green;';
+            }
+
+            previousMessages.appendChild(newMessage);
+        }
+    }
+
+    function sendMessage() {
+        const message = document.getElementById("newMessage");
+        webSocket.send(message.value)
+        message.value = "";
+    }
+</script>
+
+</body>
+
+</html>
