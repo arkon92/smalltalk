@@ -3,6 +3,10 @@ services:
   web:
     image: nginx
     volumes:
-      - ../src/main/resources:/usr/share/nginx/html
+      - ../src/main/resources:/var/smalltalk
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/smalltalk.com.conf
+      - ./nginx/cert:/etc/nginx/ssl/smalltalk.com
     ports:
-      - "9090:80"
+      - "80:80"
+      - "443:443"
+      - "444:444"

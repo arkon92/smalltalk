@@ -34,7 +34,6 @@
 <h1>Welcome !</h1>
 
 <div id="connectionDiv">
-  <!-- User name + connect button -->
   <div id="connectionParam">
     <label for="serverIp">Server IP:</label>
     <input type="text" id="serverIp" value="localhost"/>
@@ -56,7 +55,11 @@
 
 <script type="application/javascript">
 
-    var webSocket = undefined;
+    let login = undefined;
+
+    Notification.requestPermission();
+
+    let webSocket = undefined;
 
     const username = document.getElementById("username");
     username.addEventListener("keyup", function (event) {
@@ -78,13 +81,15 @@
         const serverIp = document.getElementById("serverIp").value;
         const username = document.getElementById("username").value;
 
-        const uri = `ws://${serverIp}:5020/smalltalk/${username}`
+        login = username
+
+        const uri = `wss://${serverIp}:444/smalltalk/${username}`
         try {
             webSocket = new WebSocket(uri);
         } catch (err) {
             document.getElementById("errorMessage").innerHTML = `Something went wrong`;
         }
-        webSocket.onerror = function () {
+        webSocket.onerror = function (err) {
             document.getElementById("errorMessage").innerHTML = `Unable to connect to ${uri}. Please make sure everything is correct.`;
         };
         webSocket.onopen = function () {
@@ -102,6 +107,10 @@
             const username = incomingMessage.user.name;
             const message = incomingMessage.value;
             const messageDate = incomingMessage.date
+
+            if (username !== login && username !== 'server') {
+                new Notification(`New message from ${username}`, {body: message});
+            }
 
             const previousMessages = document.getElementById("previousMessages");
             const newMessage = document.createElement("li");
