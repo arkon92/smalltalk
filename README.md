@@ -14,4 +14,4 @@ To start the backend:
 
 The chat will be accessible here:
 
-`http://localhost:9090`
+`https://{YOUR_LOCAL_IP}`
